@@ -2,26 +2,27 @@
 
 import clsx from 'clsx';
 import * as React from 'react';
-import { useEffect, Suspense, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 
-import { useEnv } from '@/context/EnvContext';
-import { useTheme } from '@/hooks/useTheme';
-import { useThemeStore } from '@/store/themeStore';
-import { useReaderStore } from '@/store/readerStore';
-import { useLibraryStore } from '@/store/libraryStore';
-import { useSidebarStore } from '@/store/sidebarStore';
-import { useNotebookStore } from '@/store/notebookStore';
-import { useSettingsStore } from '@/store/settingsStore';
-import { useDeviceControlStore } from '@/store/deviceStore';
-import { useScreenWakeLock } from '@/hooks/useScreenWakeLock';
-import { eventDispatcher } from '@/utils/event';
-import { interceptWindowOpen } from '@/utils/open';
-import { mountAdditionalFonts } from '@/utils/font';
-import { isTauriAppPlatform } from '@/services/environment';
-import { getSysFontsList, setSystemUIVisibility } from '@/utils/bridge';
 import { AboutWindow } from '@/components/AboutWindow';
-import { UpdaterWindow } from '@/components/UpdaterWindow';
 import { Toast } from '@/components/Toast';
+import { UpdaterWindow } from '@/components/UpdaterWindow';
+import { useEnv } from '@/context/EnvContext';
+import { useScreenWakeLock } from '@/hooks/useScreenWakeLock';
+import { useTheme } from '@/hooks/useTheme';
+import { isTauriAppPlatform } from '@/services/environment';
+import { useChatStore } from '@/store/chatStore';
+import { useDeviceControlStore } from '@/store/deviceStore';
+import { useLibraryStore } from '@/store/libraryStore';
+import { useNotebookStore } from '@/store/notebookStore';
+import { useReaderStore } from '@/store/readerStore';
+import { useSettingsStore } from '@/store/settingsStore';
+import { useSidebarStore } from '@/store/sidebarStore';
+import { useThemeStore } from '@/store/themeStore';
+import { getSysFontsList, setSystemUIVisibility } from '@/utils/bridge';
+import { eventDispatcher } from '@/utils/event';
+import { mountAdditionalFonts } from '@/utils/font';
+import { interceptWindowOpen } from '@/utils/open';
 import ReaderContent from './ReaderContent';
 
 const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
@@ -31,6 +32,7 @@ const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
   const { settings, setSettings } = useSettingsStore();
   const { isSideBarVisible, setSideBarVisible } = useSidebarStore();
   const { isNotebookVisible, setNotebookVisible } = useNotebookStore();
+  const { isChatVisible, setChatVisible } = useChatStore();
   const { isDarkMode, showSystemUI, dismissSystemUI } = useThemeStore();
   const { acquireBackKeyInterception, releaseBackKeyInterception } = useDeviceControlStore();
   const [libraryLoaded, setLibraryLoaded] = useState(false);
@@ -65,6 +67,7 @@ const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
     if (event.detail.keyName === 'Back') {
       setSideBarVisible(false);
       setNotebookVisible(false);
+      setChatVisible(false);
       return true;
     }
     return false;
@@ -72,11 +75,11 @@ const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
 
   useEffect(() => {
     if (!appService?.isAndroidApp) return;
-    if (isSideBarVisible || isNotebookVisible) {
+    if (isSideBarVisible || isNotebookVisible || isChatVisible) {
       acquireBackKeyInterception();
       eventDispatcher.onSync('native-key-down', handleKeyDown);
     }
-    if (!isSideBarVisible && !isNotebookVisible) {
+    if (!isSideBarVisible && !isNotebookVisible && !isChatVisible) {
       releaseBackKeyInterception();
       eventDispatcher.offSync('native-key-down', handleKeyDown);
     }
@@ -87,7 +90,7 @@ const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSideBarVisible, isNotebookVisible]);
+  }, [isSideBarVisible, isNotebookVisible, isChatVisible]);
 
   useEffect(() => {
     if (isInitiating.current) return;

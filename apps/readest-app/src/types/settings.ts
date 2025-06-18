@@ -42,4 +42,10 @@ export interface SystemSettings {
 
   globalReadSettings: ReadSettings;
   globalViewSettings: ViewSettings;
+
+  // AI Chat settings
+  aiProvider?: 'gemini' | 'openai' | 'anthropic';
+  geminiApiKey?: string;
+  geminiModel?: string;
+  aiChatEnabled?: boolean;
 }

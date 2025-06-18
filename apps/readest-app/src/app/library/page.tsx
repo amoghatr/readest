@@ -1,53 +1,52 @@
 'use client';
 
 import clsx from 'clsx';
-import * as React from 'react';
-import { useState, useRef, useEffect, Suspense } from 'react';
 import { ReadonlyURLSearchParams, useRouter, useSearchParams } from 'next/navigation';
+import * as React from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 
-import { Book } from '@/types/book';
-import { AppService } from '@/types/system';
-import { navigateToLogin, navigateToReader } from '@/utils/nav';
-import { getFilename, listFormater } from '@/utils/book';
-import { eventDispatcher } from '@/utils/event';
-import { ProgressPayload } from '@/utils/transfer';
-import { throttle } from '@/utils/throttle';
 import { parseOpenWithFiles } from '@/helpers/openWith';
-import { isTauriAppPlatform } from '@/services/environment';
 import { checkForAppUpdates } from '@/helpers/updater';
 import { FILE_ACCEPT_FORMATS, SUPPORTED_FILE_EXTS } from '@/services/constants';
+import { isTauriAppPlatform } from '@/services/environment';
+import { Book } from '@/types/book';
+import { AppService } from '@/types/system';
+import { getFilename, listFormater } from '@/utils/book';
+import { eventDispatcher } from '@/utils/event';
+import { navigateToLogin, navigateToReader } from '@/utils/nav';
+import { throttle } from '@/utils/throttle';
+import { ProgressPayload } from '@/utils/transfer';
 import { impactFeedback } from '@tauri-apps/plugin-haptics';
-import { getCurrentWebview } from '@tauri-apps/api/webview';
 
-import { useEnv } from '@/context/EnvContext';
 import { useAuth } from '@/context/AuthContext';
+import { useEnv } from '@/context/EnvContext';
+import { useOpenWithBooks } from '@/hooks/useOpenWithBooks';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { useSafeAreaInsets } from '@/hooks/useSafeAreaInsets';
+import { useScreenWakeLock } from '@/hooks/useScreenWakeLock';
+import { useTheme } from '@/hooks/useTheme';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useLibraryStore } from '@/store/libraryStore';
 import { useSettingsStore } from '@/store/settingsStore';
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import { useTheme } from '@/hooks/useTheme';
-import { useDemoBooks } from './hooks/useDemoBooks';
-import { useBooksSync } from './hooks/useBooksSync';
-import { useSafeAreaInsets } from '@/hooks/useSafeAreaInsets';
-import { useScreenWakeLock } from '@/hooks/useScreenWakeLock';
-import { useOpenWithBooks } from '@/hooks/useOpenWithBooks';
 import { lockScreenOrientation } from '@/utils/bridge';
 import { mountAdditionalFonts } from '@/utils/font';
 import {
-  tauriHandleSetAlwaysOnTop,
-  tauriHandleToggleFullScreen,
-  tauriQuitApp,
+    tauriHandleSetAlwaysOnTop,
+    tauriHandleToggleFullScreen,
+    tauriQuitApp,
 } from '@/utils/window';
+import { useBooksSync } from './hooks/useBooksSync';
+import { useDemoBooks } from './hooks/useDemoBooks';
 
 import { AboutWindow } from '@/components/AboutWindow';
-import { UpdaterWindow } from '@/components/UpdaterWindow';
-import { Toast } from '@/components/Toast';
-import Spinner from '@/components/Spinner';
-import LibraryHeader from './components/LibraryHeader';
-import Bookshelf from './components/Bookshelf';
 import BookDetailModal from '@/components/BookDetailModal';
-import useShortcuts from '@/hooks/useShortcuts';
 import DropIndicator from '@/components/DropIndicator';
+import Spinner from '@/components/Spinner';
+import { Toast } from '@/components/Toast';
+import { UpdaterWindow } from '@/components/UpdaterWindow';
+import useShortcuts from '@/hooks/useShortcuts';
+import Bookshelf from './components/Bookshelf';
+import LibraryHeader from './components/LibraryHeader';
 
 const LibraryPageWithSearchParams = () => {
   const searchParams = useSearchParams();
@@ -193,18 +192,24 @@ const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchP
     }
 
     if (isTauriAppPlatform()) {
-      const unlisten = getCurrentWebview().onDragDropEvent((event) => {
-        if (event.payload.type === 'over') {
-          setIsDragging(true);
-        } else if (event.payload.type === 'drop') {
-          setIsDragging(false);
-          handleDropedFiles(event.payload.paths);
-        } else {
-          setIsDragging(false);
-        }
-      });
+      const setupDragDropListener = async () => {
+        const { getCurrentWebview } = await import('@tauri-apps/api/webview');
+        const unlisten = await getCurrentWebview().onDragDropEvent((event) => {
+          if (event.payload.type === 'over') {
+            setIsDragging(true);
+          } else if (event.payload.type === 'drop') {
+            setIsDragging(false);
+            handleDropedFiles(event.payload.paths);
+          } else {
+            setIsDragging(false);
+          }
+        });
+        return unlisten;
+      };
+
+      const cleanup = setupDragDropListener();
       return () => {
-        unlisten.then((fn) => fn());
+        cleanup.then((fn) => fn());
       };
     }
 

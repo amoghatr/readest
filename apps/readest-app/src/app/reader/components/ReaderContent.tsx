@@ -1,32 +1,33 @@
 'use client';
 
 import clsx from 'clsx';
-import * as React from 'react';
-import { useState, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import * as React from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useEnv } from '@/context/EnvContext';
-import { useSettingsStore } from '@/store/settingsStore';
+import { parseOpenWithFiles } from '@/helpers/openWith';
+import { BOOK_IDS_SEPARATOR } from '@/services/constants';
+import { isTauriAppPlatform } from '@/services/environment';
 import { useBookDataStore } from '@/store/bookDataStore';
 import { useReaderStore } from '@/store/readerStore';
+import { useSettingsStore } from '@/store/settingsStore';
 import { useSidebarStore } from '@/store/sidebarStore';
 import { Book } from '@/types/book';
 import { SystemSettings } from '@/types/settings';
-import { parseOpenWithFiles } from '@/helpers/openWith';
-import { tauriHandleClose, tauriHandleOnCloseWindow } from '@/utils/window';
-import { isTauriAppPlatform } from '@/services/environment';
-import { uniqueId } from '@/utils/misc';
 import { eventDispatcher } from '@/utils/event';
+import { uniqueId } from '@/utils/misc';
 import { navigateToLibrary } from '@/utils/nav';
-import { BOOK_IDS_SEPARATOR } from '@/services/constants';
+import { tauriHandleClose, tauriHandleOnCloseWindow } from '@/utils/window';
 
-import useBooksManager from '../hooks/useBooksManager';
-import useBookShortcuts from '../hooks/useBookShortcuts';
 import BookDetailModal from '@/components/BookDetailModal';
 import Spinner from '@/components/Spinner';
-import SideBar from './sidebar/SideBar';
-import Notebook from './notebook/Notebook';
+import useBookShortcuts from '../hooks/useBookShortcuts';
+import useBooksManager from '../hooks/useBooksManager';
 import BooksGrid from './BooksGrid';
+import ChatPanel from './chat/ChatPanel';
+import Notebook from './notebook/Notebook';
+import SideBar from './sidebar/SideBar';
 
 const ReaderContent: React.FC<{ ids?: string; settings: SystemSettings }> = ({ ids, settings }) => {
   const router = useRouter();
@@ -167,6 +168,7 @@ const ReaderContent: React.FC<{ ids?: string; settings: SystemSettings }> = ({ i
       <SideBar onGoToLibrary={handleCloseBooksToLibrary} />
       <BooksGrid bookKeys={bookKeys} onCloseBook={handleCloseBook} />
       <Notebook />
+      <ChatPanel />
       {showDetailsBook && (
         <BookDetailModal
           isOpen={!!showDetailsBook}

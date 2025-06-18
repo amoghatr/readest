@@ -1,36 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import { FiSearch } from 'react-icons/fi';
-import { FiCopy } from 'react-icons/fi';
-import { PiHighlighterFill } from 'react-icons/pi';
+import React, { useEffect, useState } from 'react';
+import { BsPencilSquare, BsTranslate } from 'react-icons/bs';
 import { FaWikipediaW } from 'react-icons/fa';
-import { BsPencilSquare } from 'react-icons/bs';
-import { RiDeleteBinLine } from 'react-icons/ri';
-import { BsTranslate } from 'react-icons/bs';
-import { TbHexagonLetterD } from 'react-icons/tb';
 import { FaHeadphones } from 'react-icons/fa6';
+import { FiCopy, FiSearch } from 'react-icons/fi';
+import { HiChatBubbleLeftRight } from 'react-icons/hi2';
+import { PiHighlighterFill } from 'react-icons/pi';
+import { RiDeleteBinLine } from 'react-icons/ri';
+import { TbHexagonLetterD } from 'react-icons/tb';
 
+import { useEnv } from '@/context/EnvContext';
+import { useResponsiveSize } from '@/hooks/useResponsiveSize';
+import { useTranslation } from '@/hooks/useTranslation';
+import { HIGHLIGHT_COLOR_HEX } from '@/services/constants';
+import { useBookDataStore } from '@/store/bookDataStore';
+import { useChatStore } from '@/store/chatStore';
+import { useNotebookStore } from '@/store/notebookStore';
+import { useReaderStore } from '@/store/readerStore';
+import { useSettingsStore } from '@/store/settingsStore';
+import { BookNote, BooknoteGroup, HighlightColor, HighlightStyle } from '@/types/book';
+import { eventDispatcher } from '@/utils/event';
+import { getOSPlatform, uniqueId } from '@/utils/misc';
+import { getPopupPosition, getPosition, Position, TextSelection } from '@/utils/sel';
+import { findTocItemBS } from '@/utils/toc';
 import * as CFI from 'foliate-js/epubcfi.js';
 import { Overlayer } from 'foliate-js/overlayer.js';
-import { useEnv } from '@/context/EnvContext';
-import { BookNote, BooknoteGroup, HighlightColor, HighlightStyle } from '@/types/book';
-import { getOSPlatform, uniqueId } from '@/utils/misc';
-import { useBookDataStore } from '@/store/bookDataStore';
-import { useSettingsStore } from '@/store/settingsStore';
-import { useReaderStore } from '@/store/readerStore';
-import { useNotebookStore } from '@/store/notebookStore';
-import { useTranslation } from '@/hooks/useTranslation';
-import { useResponsiveSize } from '@/hooks/useResponsiveSize';
 import { useFoliateEvents } from '../../hooks/useFoliateEvents';
 import { useNotesSync } from '../../hooks/useNotesSync';
 import { useTextSelector } from '../../hooks/useTextSelector';
-import { getPopupPosition, getPosition, Position, TextSelection } from '@/utils/sel';
-import { eventDispatcher } from '@/utils/event';
-import { findTocItemBS } from '@/utils/toc';
-import { HIGHLIGHT_COLOR_HEX } from '@/services/constants';
 import AnnotationPopup from './AnnotationPopup';
-import WiktionaryPopup from './WiktionaryPopup';
-import WikipediaPopup from './WikipediaPopup';
 import TranslatorPopup from './TranslatorPopup';
+import WikipediaPopup from './WikipediaPopup';
+import WiktionaryPopup from './WiktionaryPopup';
 
 const Annotator: React.FC<{ bookKey: string }> = ({ bookKey }) => {
   const _ = useTranslation();
@@ -39,6 +39,7 @@ const Annotator: React.FC<{ bookKey: string }> = ({ bookKey }) => {
   const { getConfig, saveConfig, getBookData, updateBooknotes } = useBookDataStore();
   const { getProgress, getView, getViewsById, getViewSettings } = useReaderStore();
   const { setNotebookVisible, setNotebookNewAnnotation } = useNotebookStore();
+  const { setChatVisible, setCurrentSelection, setActiveConversation } = useChatStore();
 
   useNotesSync(bookKey);
 
@@ -384,6 +385,20 @@ const Annotator: React.FC<{ bookKey: string }> = ({ bookKey }) => {
     eventDispatcher.dispatch('tts-speak', { bookKey, range: selection.range });
   };
 
+  const handleChat = () => {
+    if (!selection || !selection.text) return;
+    setShowAnnotPopup(false);
+
+    // Get CFI for the selection
+    const cfi = view?.getCFI(selection.index, selection.range);
+
+    // Set the current selection in the chat store
+    setCurrentSelection(selection);
+
+    // Open chat - ChatPanel will handle conversation creation/selection
+    setChatVisible(true);
+  };
+
   const handleExportMarkdown = (event: CustomEvent) => {
     const { bookKey: exportBookKey } = event.detail;
     if (bookKey !== exportBookKey) return;
@@ -483,6 +498,7 @@ const Annotator: React.FC<{ bookKey: string }> = ({ bookKey }) => {
     { tooltipText: _('Wikipedia'), Icon: FaWikipediaW, onClick: handleWikipedia },
     { tooltipText: _('Translate'), Icon: BsTranslate, onClick: handleTranslation },
     { tooltipText: _('Speak'), Icon: FaHeadphones, onClick: handleSpeakText },
+    { tooltipText: _('Chat'), Icon: HiChatBubbleLeftRight, onClick: handleChat },
   ];
 
   return (

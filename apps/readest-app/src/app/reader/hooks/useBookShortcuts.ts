@@ -1,14 +1,15 @@
-import { useReaderStore } from '@/store/readerStore';
-import { useNotebookStore } from '@/store/notebookStore';
-import { isTauriAppPlatform } from '@/services/environment';
 import useShortcuts from '@/hooks/useShortcuts';
-import useBooksManager from './useBooksManager';
-import { useSidebarStore } from '@/store/sidebarStore';
+import { MAX_ZOOM_LEVEL, MIN_ZOOM_LEVEL, ZOOM_STEP } from '@/services/constants';
+import { isTauriAppPlatform } from '@/services/environment';
+import { useChatStore } from '@/store/chatStore';
+import { useNotebookStore } from '@/store/notebookStore';
+import { useReaderStore } from '@/store/readerStore';
 import { useSettingsStore } from '@/store/settingsStore';
+import { useSidebarStore } from '@/store/sidebarStore';
+import { eventDispatcher } from '@/utils/event';
 import { getStyles } from '@/utils/style';
 import { tauriHandleToggleFullScreen, tauriQuitApp } from '@/utils/window';
-import { eventDispatcher } from '@/utils/event';
-import { MAX_ZOOM_LEVEL, MIN_ZOOM_LEVEL, ZOOM_STEP } from '@/services/constants';
+import useBooksManager from './useBooksManager';
 import { viewPagination } from './usePagination';
 
 interface UseBookShortcutsProps {
@@ -21,6 +22,7 @@ const useBookShortcuts = ({ sideBarBookKey, bookKeys }: UseBookShortcutsProps) =
   const { toggleSideBar, setSideBarBookKey } = useSidebarStore();
   const { setFontLayoutSettingsDialogOpen } = useSettingsStore();
   const { toggleNotebook } = useNotebookStore();
+  const { toggleChat } = useChatStore();
   const { getNextBookKey } = useBooksManager();
   const viewSettings = getViewSettings(sideBarBookKey ?? '');
   const fontSize = viewSettings?.defaultFontSize ?? 16;
@@ -148,6 +150,7 @@ const useBookShortcuts = ({ sideBarBookKey, bookKeys }: UseBookShortcutsProps) =
       onSwitchSideBar: switchSideBar,
       onToggleSideBar: toggleSideBar,
       onToggleNotebook: toggleNotebook,
+      onToggleChat: toggleChat,
       onToggleScrollMode: toggleScrollMode,
       onOpenFontLayoutSettings: () => setFontLayoutSettingsDialogOpen(true),
       onToggleSearchBar: showSearchBar,

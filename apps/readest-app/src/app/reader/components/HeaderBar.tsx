@@ -2,18 +2,19 @@ import clsx from 'clsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { PiDotsThreeVerticalBold } from 'react-icons/pi';
 
+import Dropdown from '@/components/Dropdown';
+import WindowButtons from '@/components/WindowButtons';
 import { useEnv } from '@/context/EnvContext';
-import { useThemeStore } from '@/store/themeStore';
+import { useResponsiveSize } from '@/hooks/useResponsiveSize';
 import { useReaderStore } from '@/store/readerStore';
 import { useSidebarStore } from '@/store/sidebarStore';
+import { useThemeStore } from '@/store/themeStore';
 import { useTrafficLightStore } from '@/store/trafficLightStore';
-import { useResponsiveSize } from '@/hooks/useResponsiveSize';
-import WindowButtons from '@/components/WindowButtons';
-import Dropdown from '@/components/Dropdown';
-import SidebarToggler from './SidebarToggler';
 import BookmarkToggler from './BookmarkToggler';
+import ChatToggler from './ChatToggler';
 import NotebookToggler from './NotebookToggler';
 import SettingsToggler from './SettingsToggler';
+import SidebarToggler from './SidebarToggler';
 import TranslationToggler from './TranslationToggler';
 import ViewMenu from './ViewMenu';
 
@@ -132,6 +133,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
         <div className='bg-base-100 z-20 ml-auto flex h-full items-center space-x-4'>
           <SettingsToggler />
           <NotebookToggler bookKey={bookKey} />
+          <ChatToggler bookKey={bookKey} />
           <Dropdown
             className='exclude-title-bar-mousedown dropdown-bottom dropdown-end'
             buttonClassName='btn btn-ghost h-8 min-h-8 w-8 p-0'
